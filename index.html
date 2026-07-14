@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#FAF8F5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="世界巡迴">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>世界巡迴</title>
+<style>
+:root{--bg:#FAF8F5;--card:#fff;--text:#334155;--muted:#7B7F83;--line:#EEE9E3;--accent:#6F8E78;--shadow:0 8px 24px rgba(40,50,60,.055)}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif}
+button,input,textarea,select{font:inherit}button{cursor:pointer}
+.app{max-width:520px;min-height:100vh;margin:auto;padding:env(safe-area-inset-top) 18px calc(30px + env(safe-area-inset-bottom))}
+.view{display:none}.view.active{display:block}
+header{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;padding:18px 0 16px}
+h1,h2{margin:0;text-align:center}
+h1{font-size:34px;letter-spacing:.1em}
+.iconbtn{border:0;background:transparent;font-size:31px;color:var(--text);padding:4px}
+.tagline{text-align:center;color:#B28D70;font-size:13px;letter-spacing:.16em;margin:-4px 0 20px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.trip-card{border:0;background:var(--card);border-radius:24px;min-height:180px;padding:14px 12px 12px;box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:space-between;align-items:center}
+.symbol{font-size:68px;line-height:1.2}.trip-name{font-size:19px;font-weight:700;text-align:center}
+.detail-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px}
+.detail-title{font-size:34px;line-height:1.15;margin:0;color:var(--accent);text-align:left}
+.flags{font-size:34px;white-space:nowrap}.dates{margin-top:14px;color:var(--muted);font-size:18px}
+.total{margin:38px 0 42px;background:rgba(255,255,255,.82);border-radius:26px;padding:28px 20px;text-align:center}
+.total .label{font-size:20px;color:var(--accent)}.total .value{font-size:56px;color:var(--accent);margin-top:8px}
+.menu button{width:100%;border:0;background:transparent;padding:18px 2px;text-align:left;font-size:24px;font-weight:650;color:var(--text);display:flex;justify-content:space-between}
+.menu button+button{border-top:1px solid rgba(238,233,227,.75)}
+.page-title{font-size:28px}.field{width:100%;border:1px solid var(--line);background:#fff;border-radius:15px;padding:15px;font-size:18px;margin-top:12px}
+.amount{border:0;border-bottom:2px solid var(--accent);background:transparent;border-radius:0;font-size:52px;color:var(--accent);padding:10px 0}
+.primary{width:100%;border:0;border-radius:20px;background:var(--accent);color:#fff;font-size:25px;padding:17px;margin-top:18px}
+.empty{text-align:center;color:var(--muted);padding:38px 0;font-size:18px}
+.expense-row,.list-item{padding:16px 2px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.list-title{font-size:20px}.list-note{font-size:13px;color:var(--muted);margin-top:5px;white-space:pre-line}
+.badge{display:inline-block;margin-top:6px;padding:4px 8px;border-radius:999px;background:#F0ECE7;color:var(--muted);font-size:12px}
+.actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.actions button{border:0;background:transparent;color:var(--muted);padding:4px}
+.form{display:flex;flex-direction:column;gap:12px}
+.form input,.form textarea,.form select{width:100%;border:1px solid var(--line);background:#fff;border-radius:14px;padding:14px;font-size:17px}
+dialog{border:0;border-radius:22px;width:min(430px,90vw);padding:22px;background:var(--bg)}
+dialog::backdrop{background:rgba(20,28,25,.28)}
+.dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.dialog-actions button{border:0;border-radius:12px;padding:10px 15px}.cancel{background:#EAE6E1}.ok{background:var(--accent);color:#fff}
+.backup{display:flex;gap:10px;margin-top:28px}.backup button{flex:1;border:1px solid var(--line);background:#fff;border-radius:14px;padding:12px}
+.upload{display:block;border:1.5px dashed #DCD5CE;border-radius:18px;padding:24px 16px;text-align:center;background:#fff;margin-top:10px}
+.maplink{display:inline-block;margin-top:8px;color:var(--accent);font-weight:650;text-decoration:none}
+.thumb{width:58px;height:58px;object-fit:cover;border-radius:10px;background:#eee;margin-right:10px}
+@media(max-width:360px){.trip-card{min-height:164px}.symbol{font-size:58px}.trip-name{font-size:17px}.detail-title{font-size:30px}.flags{font-size:30px}}
+</style>
+</head>
+<body>
+<div class="app">
+<section id="home" class="view active">
+<header><span></span><h1>世界巡迴</h1><button class="iconbtn" onclick="show('newTrip')">＋</button></header>
+<div class="tagline">每一段旅程，都是一個故事。</div>
+<div id="tripGrid" class="grid"></div>
+<div class="backup">
+<button id="exportBtn">匯出備份</button>
+<button id="importBtn">匯入備份</button>
+<input id="importFile" type="file" accept=".json" hidden>
+</div>
+</section>
+
+<section id="detail" class="view">
+<header><button class="iconbtn" onclick="show('home')">‹</button><span></span><button class="iconbtn" onclick="editTrip()">⋯</button></header>
+<div class="detail-head">
+<div><h2 id="detailTitle" class="detail-title"></h2><div id="detailDates" class="dates"></div></div>
+<div id="detailFlags" class="flags"></div>
+</div>
+<div class="total"><div class="label">目前花費</div><div id="detailTotal" class="value"></div></div>
+<div class="menu">
+<button onclick="openExpense()">記帳 <span>›</span></button>
+<button onclick="openList('tickets','機票')">機票 <span>›</span></button>
+<button onclick="openList('hotels','飯店')">飯店 <span>›</span></button>
+<button onclick="openFiles('files','文件')">文件 <span>›</span></button>
+<button onclick="openFiles('photos','照片')">照片 <span>›</span></button>
+</div>
+</section>
+
+<section id="expense" class="view">
+<header><button class="iconbtn" onclick="show('detail')">‹</button><h2 class="page-title">記帳</h2><span></span></header>
+<div class="total"><div class="label">目前花費</div><div id="expenseTotal" class="value"></div></div>
+<input id="amount" class="field amount" type="number" min="0" placeholder="0">
+<select id="category" class="field"><option>餐飲</option><option>交通</option><option>住宿</option><option>門票</option><option>購物</option><option>其他</option></select>
+<input id="note" class="field" placeholder="備註（可留空）">
+<input id="expenseDate" class="field" type="date">
+<button class="primary" onclick="addExpense()">記錄</button>
+<div id="expenseList"></div>
+</section>
+
+<section id="listPage" class="view">
+<header><button class="iconbtn" onclick="show('detail')">‹</button><h2 id="listTitle" class="page-title"></h2><button class="iconbtn" onclick="openItemDialog()">＋</button></header>
+<div id="listContent"></div>
+</section>
+
+<section id="filesPage" class="view">
+<header><button class="iconbtn" onclick="show('detail')">‹</button><h2 id="filesTitle" class="page-title"></h2><span></span></header>
+<label class="upload" for="filePicker">點這裡選擇檔案</label>
+<input id="filePicker" type="file" multiple hidden>
+<div id="filesContent"></div>
+</section>
+
+<section id="newTrip" class="view">
+<header><button class="iconbtn" onclick="show('home')">‹</button><h2 class="page-title">新增行程</h2><span></span></header>
+<div class="form">
+<input id="newName" placeholder="行程名稱">
+<input id="newStart" type="date">
+<input id="newEnd" type="date">
+<input id="newFlags" placeholder="國旗或代碼，例如 🇨🇳 🇲🇳">
+<input id="newCurrency" placeholder="幣別，例如 ¥">
+<input id="newSymbol" placeholder="代表圖示，例如 🐎">
+<button class="primary" onclick="saveTrip()">加入世界巡迴</button>
+</div>
+</section>
+</div>
+
+<dialog id="itemDialog">
+<h3 id="dialogTitle"></h3>
+<div class="form">
+<input id="itemTitle" placeholder="名稱">
+<input id="itemInfo" placeholder="日期／航線／入住資訊">
+<input id="itemAddress" placeholder="地址（飯店才需要）">
+<textarea id="itemNote" rows="3" placeholder="備註（可留空）"></textarea>
+</div>
+<div class="dialog-actions">
+<button class="cancel" onclick="itemDialog.close()">取消</button>
+<button class="ok" onclick="saveItem()">儲存</button>
+</div>
+</dialog>
+
+<script>
+const defaults=[
+{name:"冰島",symbol:"🧊",flags:"🇮🇸",currency:"ISK",start:"",end:"",total:0,expenses:[],tickets:[],hotels:[]},
+{name:"玉山",symbol:"🏔️",flags:"🇹🇼",currency:"NT$",start:"",end:"",total:0,expenses:[],tickets:[],hotels:[]},
+{name:"海豚松本",symbol:"🐬",flags:"🇯🇵",currency:"¥",start:"",end:"",total:0,expenses:[],tickets:[],hotels:[]},
+{name:"新疆游牧",symbol:"🐎",flags:"CN MN",currency:"¥",start:"2026-07-22",end:"2026-08-06",total:1865,expenses:[],tickets:[],hotels:[]},
+{name:"肯亞熱氣球",symbol:"🎈",flags:"🇰🇪",currency:"KSh",start:"",end:"",total:0,expenses:[],tickets:[],hotels:[]},
+{name:"東加紐西蘭",symbol:"🐋",flags:"🇹🇴 🇳🇿",currency:"NZ$",start:"",end:"",total:0,expenses:[],tickets:[],hotels:[]},
+{name:"挪威健行",symbol:"🥾",flags:"🇳🇴",currency:"NOK",start:"",end:"",total:0,expenses:[],tickets:[],hotels:[]},
+{name:"東帝汶",symbol:"🐳",flags:"TL",currency:"$",start:"",end:"",total:0,expenses:[],tickets:[],hotels:[]},
+{name:"澳洲瓦努",symbol:"🐨",flags:"🇦🇺 🇻🇺",currency:"A$",start:"",end:"",total:0,expenses:[],tickets:[],hotels:[]},
+{name:"大峽谷直升機",symbol:"🚁",flags:"🇺🇸",currency:"$",start:"",end:"",total:0,expenses:[],tickets:[],hotels:[]}
+];
+
+function normalize(data){
+ return data.map((t,i)=>({
+  name:t.name||defaults[i]?.name||"旅程",
+  symbol:t.symbol||t.icon||defaults[i]?.symbol||"✈️",
+  flags:Array.isArray(t.flags)?t.flags.join(" "):(t.flags||defaults[i]?.flags||""),
+  currency:t.currency||defaults[i]?.currency||"NT$",
+  start:t.start||"",end:t.end||"",
+  total:Number(t.total||0),
+  expenses:Array.isArray(t.expenses)?t.expenses.map(e=>({amount:Number(e.amount||0),category:e.category||"其他",note:e.note||"",date:e.date||""})):[],
+  tickets:Array.isArray(t.tickets)?t.tickets:[],
+  hotels:Array.isArray(t.hotels)?t.hotels:[]
+ }));
+}
+function loadTrips(){
+ const keys=["worldTourOfficial11","worldTourOfficial","worldTourV6","worldTourV5","worldTourV4","worldTourV3","worldTourV2"];
+ const candidates=[];
+ for(const k of keys){
+  try{
+   const data=JSON.parse(localStorage.getItem(k)||"null");
+   if(Array.isArray(data)&&data.length){
+    const n=normalize(data);
+    const score=n.reduce((s,t)=>s+Number(t.total||0)+(t.expenses?.length||0)*1000,0);
+    candidates.push({n,score});
+   }
+  }catch(e){}
+ }
+ if(!candidates.length)return defaults;
+ candidates.sort((a,b)=>b.score-a.score);
+ return candidates[0].n;
+}
+
+let trips=loadTrips(),selected=0,currentType="tickets",editItemIndex=-1,fileType="files";
+function save(){localStorage.setItem("worldTourOfficial11",JSON.stringify(trips))}
+function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById(id).classList.add("active");scrollTo(0,0)}
+function fmtDate(s){if(!s)return"";const d=new Date(s+"T00:00:00");return `${d.getMonth()+1}/${d.getDate()}`}
+function renderHome(){tripGrid.innerHTML=trips.map((t,i)=>`<button class="trip-card" onclick="openTrip(${i})"><div class="symbol">${t.symbol}</div><div class="trip-name">${t.name}</div></button>`).join("")}
+function openTrip(i){selected=i;const t=trips[i];detailTitle.textContent=t.name;detailFlags.textContent=t.flags;detailDates.textContent=[fmtDate(t.start),fmtDate(t.end)].filter(Boolean).join(" – ");detailTotal.textContent=t.currency+Number(t.total).toLocaleString();show("detail")}
+function editTrip(){const t=trips[selected];const n=prompt("行程名稱",t.name);if(!n)return;t.name=n;save();openTrip(selected);renderHome()}
+function openExpense(){const t=trips[selected];expenseTotal.textContent=t.currency+Number(t.total).toLocaleString();expenseDate.value=new Date().toISOString().slice(0,10);renderExpenses();show("expense")}
+function addExpense(){const n=Number(amount.value);if(!n||n<=0)return;const t=trips[selected];t.expenses.push({amount:n,category:category.value,note:note.value.trim(),date:expenseDate.value});t.total=Number(t.total||0)+n;save();amount.value="";note.value="";expenseTotal.textContent=t.currency+t.total.toLocaleString();renderExpenses()}
+function renderExpenses(){const t=trips[selected],arr=t.expenses||[];expenseList.innerHTML=arr.length?arr.slice().reverse().map((e,r)=>{const i=arr.length-1-r;return `<div class="expense-row"><div><strong>${t.currency}${Number(e.amount).toLocaleString()}</strong><div class="list-note">${e.note||e.date||""}</div><span class="badge">${e.category||"其他"}</span></div><div class="actions"><button onclick="editExpense(${i})">編輯</button><button onclick="deleteExpense(${i})">刪除</button></div></div>`}).join(""):`<div class="empty">尚未記帳</div>`}
+function editExpense(i){const t=trips[selected],e=t.expenses[i];const v=Number(prompt("金額",e.amount));if(!v)return;const n=prompt("備註",e.note||"");const old=Number(e.amount);e.amount=v;if(n!==null)e.note=n;t.total=t.total-old+v;save();expenseTotal.textContent=t.currency+t.total.toLocaleString();renderExpenses()}
+function deleteExpense(i){const t=trips[selected];t.total-=Number(t.expenses[i].amount);t.expenses.splice(i,1);save();expenseTotal.textContent=t.currency+t.total.toLocaleString();renderExpenses()}
+
+function openList(type,title){currentType=type;listTitle.textContent=title;renderList();show("listPage")}
+function renderList(){const arr=trips[selected][currentType]||[];listContent.innerHTML=arr.length?arr.map((x,i)=>{const map=x.address?`<a class="maplink" target="_blank" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}">開啟地圖</a>`:"";return `<div class="list-item"><div><div class="list-title">${x.title||""}</div><div class="list-note">${[x.info,x.note].filter(Boolean).join("\n")}</div>${map}</div><div class="actions"><button onclick="openItemDialog(${i})">編輯</button><button onclick="deleteItem(${i})">刪除</button></div></div>`}).join(""):`<div class="empty">尚未加入資料</div>`}
+function openItemDialog(i=-1){editItemIndex=i;const x=i>=0?(trips[selected][currentType][i]||{}):{};dialogTitle.textContent=(i>=0?"編輯":"新增")+listTitle.textContent;itemTitle.value=x.title||"";itemInfo.value=x.info||"";itemAddress.value=x.address||"";itemNote.value=x.note||"";itemAddress.style.display=currentType==="hotels"?"block":"none";itemDialog.showModal()}
+function saveItem(){const title=itemTitle.value.trim();if(!title)return;const obj={title,info:itemInfo.value.trim(),address:currentType==="hotels"?itemAddress.value.trim():"",note:itemNote.value.trim()};trips[selected][currentType]=trips[selected][currentType]||[];if(editItemIndex>=0)trips[selected][currentType][editItemIndex]=obj;else trips[selected][currentType].push(obj);save();renderList();itemDialog.close()}
+function deleteItem(i){trips[selected][currentType].splice(i,1);save();renderList()}
+
+function dbOpen(){return new Promise((resolve,reject)=>{const req=indexedDB.open("WorldTourOfficialFiles",1);req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains("files"))db.createObjectStore("files",{keyPath:"id"})};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
+async function dbPut(x){const db=await dbOpen();const tx=db.transaction("files","readwrite");tx.objectStore("files").put(x);return new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=()=>j(tx.error)})}
+async function dbAll(){const db=await dbOpen();const tx=db.transaction("files","readonly");const req=tx.objectStore("files").getAll();return new Promise((r,j)=>{req.onsuccess=()=>r(req.result);req.onerror=()=>j(req.error)})}
+async function dbGet(id){const db=await dbOpen();const tx=db.transaction("files","readonly");const req=tx.objectStore("files").get(id);return new Promise((r,j)=>{req.onsuccess=()=>r(req.result);req.onerror=()=>j(req.error)})}
+async function dbDelete(id){const db=await dbOpen();const tx=db.transaction("files","readwrite");tx.objectStore("files").delete(id);return new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=()=>j(tx.error)})}
+async function openFiles(type,title){fileType=type;filesTitle.textContent=title;filePicker.accept=type==="photos"?"image/*":"image/*,.pdf,.doc,.docx";await renderFiles();show("filesPage")}
+filePicker.onchange=async e=>{for(const f of e.target.files){await dbPut({id:crypto.randomUUID(),trip:selected,type:fileType,name:f.name,mime:f.type,blob:f,date:Date.now()})}e.target.value="";renderFiles()}
+async function renderFiles(){const all=(await dbAll()).filter(x=>x.trip===selected&&x.type===fileType);filesContent.innerHTML=all.length?all.map(x=>{const img=(x.mime||"").startsWith("image/");const u=img?URL.createObjectURL(x.blob):"";return `<div class="list-item">${img?`<img class="thumb" src="${u}">`:""}<div style="flex:1"><div class="list-title">${x.name}</div><div class="list-note">${new Date(x.date).toLocaleDateString("zh-TW")}</div></div><div class="actions"><button onclick="openStored('${x.id}')">開啟</button><button onclick="deleteStored('${x.id}')">刪除</button></div></div>`}).join(""):`<div class="empty">尚未加入資料</div>`}
+async function openStored(id){const x=await dbGet(id);if(x)window.open(URL.createObjectURL(x.blob),"_blank")}
+async function deleteStored(id){await dbDelete(id);renderFiles()}
+
+function saveTrip(){const name=newName.value.trim();if(!name)return;trips.push({name,symbol:newSymbol.value.trim()||"✈️",flags:newFlags.value.trim(),currency:newCurrency.value.trim()||"NT$",start:newStart.value,end:newEnd.value,total:0,expenses:[],tickets:[],hotels:[]});save();renderHome();["newName","newStart","newEnd","newFlags","newCurrency","newSymbol"].forEach(id=>document.getElementById(id).value="");show("home")}
+
+exportBtn.onclick=()=>{const blob=new Blob([JSON.stringify({version:"official-1.1",trips},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="世界巡迴正式版備份.json";a.click();URL.revokeObjectURL(a.href)}
+importBtn.onclick=()=>importFile.click();
+importFile.onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(!Array.isArray(d.trips))throw 0;trips=normalize(d.trips);save();renderHome();alert("備份已匯入")}catch{alert("備份檔格式不正確")}e.target.value=""}
+
+save();renderHome();
+if("serviceWorker"in navigator){
+ navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister()));
+}
+</script>
+</body>
+</html>

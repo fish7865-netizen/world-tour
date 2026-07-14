@@ -1,0 +1,1 @@
+正式版 v1.1：保留舊資料，並主動移除舊 Service Worker，避免一直看到舊畫面。拖到 Netlify Production deploys 白色框。
